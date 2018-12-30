@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatelessWidget {
   final _subject = BehaviorSubject<File>();
-  final encrypter = Encrypter(AES(key));
+  final encrypter = Encrypter(Salsa20(key, '12345678'));
 
   Stream<File> get _image => _subject.stream;
 
@@ -110,9 +110,7 @@ class MyHomePage extends StatelessWidget {
         onPressed: () async {
           final image = await _image.first;
           final bytes = await image.readAsBytes();
-          final padded = List.generate(bytes.length % 8, (i) => 0);
-          padded.addAll(bytes);
-          final base64Image = base64Encode(padded);
+          final base64Image = base64Encode(bytes);
           final encryptedImage = encrypter.encrypt(base64Image);
           final file = await _localFile;
           file.writeAsString(encryptedImage);
@@ -128,7 +126,7 @@ class MyHomePage extends StatelessWidget {
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    return File('$path/93759.encrypted');
+    return File('$path/${Random().nextInt(100500)}.encrypted');
   }
 
   Widget _documentList(BuildContext context) {
@@ -155,9 +153,7 @@ class MyHomePage extends StatelessWidget {
                       final encrypted = await File(e.path).readAsString();
                       final imageBase64 = encrypter.decrypt(encrypted);
                       Uint8List decodedImage = base64Decode(imageBase64);
-                      final firstElement = decodedImage.firstWhere((i) => i != 0);
-                      final firstIndex = decodedImage.indexOf(firstElement);
-                      openDocumentDialog(decodedImage.sublist(firstIndex), context);
+                      openDocumentDialog(decodedImage, context);
                     },
                   )).toList(),
                 );
