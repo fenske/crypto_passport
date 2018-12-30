@@ -110,14 +110,12 @@ class MyHomePage extends StatelessWidget {
         onPressed: () async {
           final image = await _image.first;
           final bytes = await image.readAsBytes();
-//          final padded = List.generate(bytes.length % 8, (i) => 0);
-//          padded.addAll(bytes);
-//          final base64Image = base64Encode(padded);
-//          final encryptedImage = encrypter.encrypt(base64Image);
+          final padded = List.generate(bytes.length % 8, (i) => 0);
+          padded.addAll(bytes);
+          final base64Image = base64Encode(padded);
+          final encryptedImage = encrypter.encrypt(base64Image);
           final file = await _localFile;
-          final base64Image = base64Encode(bytes);
-          file.writeAsString(base64Image);
-//          file.writeAsString(encryptedImage);
+          file.writeAsString(encryptedImage);
           Navigator.of(context).pop();
         });
   }
@@ -130,7 +128,7 @@ class MyHomePage extends StatelessWidget {
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    return File('$path/93757.encrypted');
+    return File('$path/93759.encrypted');
   }
 
   Widget _documentList(BuildContext context) {
@@ -154,11 +152,12 @@ class MyHomePage extends StatelessWidget {
                   children: files.data.map((e) => InkWell(
                     child: Text(e.path.substring(112)),
                     onTap: () async {
-//                      final encrypted = await File(e.path).readAsString();
-//                      final imageBase64 = encrypter.decrypt(encrypted);
-//                      Uint8List decodedImage = base64Decode(imageBase64);
-                      Uint8List decodedImage = base64Decode(await File(e.path).readAsString());
-                      openDocumentDialog(decodedImage, context);
+                      final encrypted = await File(e.path).readAsString();
+                      final imageBase64 = encrypter.decrypt(encrypted);
+                      Uint8List decodedImage = base64Decode(imageBase64);
+                      final firstElement = decodedImage.firstWhere((i) => i != 0);
+                      final firstIndex = decodedImage.indexOf(firstElement);
+                      openDocumentDialog(decodedImage.sublist(firstIndex), context);
                     },
                   )).toList(),
                 );
